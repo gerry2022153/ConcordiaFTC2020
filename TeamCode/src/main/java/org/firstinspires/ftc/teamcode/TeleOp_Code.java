@@ -31,7 +31,6 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -89,13 +88,13 @@ public class TeleOp_Code extends LinearOpMode {
             double powerRB;
 
             // Calculate power based on joystick positions.
-            double c_move_LR = -gamepad1.right_stick_x;
-            double c_move_FB = gamepad1.right_stick_y;
+            double c_move_LR = gamepad1.right_stick_x;
+            double c_move_FB = -gamepad1.right_stick_y;
             double c_rotate = gamepad1.left_stick_x;
-            powerLF = Range.clip(c_move_FB - c_move_LR, -1.0, 1.0);
-            powerLB = Range.clip(c_move_FB + c_move_LR, -1.0, 1.0);
-            powerRF = Range.clip(-c_move_FB + c_move_LR, -1.0, 1.0);
-            powerRB = Range.clip(-c_move_FB - c_move_LR, -1.0, 1.0);
+            powerLF = Range.clip(c_move_FB - c_move_LR - c_rotate, -1.0, 1.0);
+            powerLB = Range.clip(c_move_FB + c_move_LR - c_rotate, -1.0, 1.0);
+            powerRF = Range.clip(-c_move_FB - c_move_LR - c_rotate, -1.0, 1.0);
+            powerRB = Range.clip(-c_move_FB + c_move_LR - c_rotate, -1.0, 1.0);
 
             // Send calculated power to wheels
             motorLF.setPower(powerLF);
