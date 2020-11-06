@@ -34,6 +34,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+import java.lang.Math;
 
 
 /**
@@ -69,10 +70,15 @@ public class TeleOp_Code extends LinearOpMode {
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        motorLF = hardwareMap.get(DcMotor.class, "left_front");
-        motorLB = hardwareMap.get(DcMotor.class, "left_back");
-        motorRF = hardwareMap.get(DcMotor.class, "right_front");
-        motorRB = hardwareMap.get(DcMotor.class, "right_back");
+        motorLF = hardwareMap.get(DcMotor.class, "motor_lf");
+        motorLB = hardwareMap.get(DcMotor.class, "motor_lb");
+        motorRF = hardwareMap.get(DcMotor.class, "motor_rf");
+        motorRB = hardwareMap.get(DcMotor.class, "motor_rb");
+
+        // Most robots need the motor on one side to be reversed to drive forward
+        // Reverse the motor that runs backwards when connected directly to the battery
+        motorLF.setDirection(DcMotor.Direction.REVERSE);
+        motorLB.setDirection(DcMotor.Direction.REVERSE);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -82,29 +88,37 @@ public class TeleOp_Code extends LinearOpMode {
         while (opModeIsActive()) {
 
             // Setup a variable for each drive wheel to save power level for telemetry
-            double powerLF;
-            double powerLB;
-            double powerRF;
-            double powerRB;
+            double power_LF_RB, power_LB_RF;
 
             // Calculate power based on joystick positions.
             double c_move_LR = gamepad1.right_stick_x;
             double c_move_FB = -gamepad1.right_stick_y;
             double c_rotate = gamepad1.left_stick_x;
-            powerLF = Range.clip(c_move_FB - c_move_LR - c_rotate, -1.0, 1.0);
-            powerLB = Range.clip(c_move_FB + c_move_LR - c_rotate, -1.0, 1.0);
-            powerRF = Range.clip(-c_move_FB - c_move_LR - c_rotate, -1.0, 1.0);
-            powerRB = Range.clip(-c_move_FB + c_move_LR - c_rotate, -1.0, 1.0);
+
+            double c_move_mag = Math.sqrt(c_move_LR * c_move_LR + c_move_FB * c_move_FB);
+            double c_move_ang = 0.0;
+            if (c_move_LR == 0.0) {
+                if (c_move_FB > 0.0) c_move_ang = Math.PI / 2.0;
+                else if (c_move_FB < 0.0) c_move_ang = -Math.PI / 2.0;
+            } else if (c_move_LR > 0.0) c_move_ang = Math.atan(c_move_FB / c_move_LR);
+            else {
+                c_move_ang = Math.atan(c_move_FB / c_move_LR);
+                if (c_move_FB >= 0.0) c_move_ang += Math.PI;
+                else c_move_ang -= Math.PI;
+            }
+
+            power_LF_RB = Range.clip(Math.sin(c_move_ang + Math.PI / 4.0) * c_move_mag, -1.0, 1.0);
+            power_LB_RF = Range.clip(Math.sin(c_move_ang - Math.PI / 4.0) * c_move_mag, -1.0, 1.0);
 
             // Send calculated power to wheels
-            motorLF.setPower(powerLF);
-            motorLB.setPower(powerLB);
-            motorRF.setPower(powerRF);
-            motorRB.setPower(powerRB);
+            motorLF.setPower(power_LF_RB);
+            motorLB.setPower(power_LB_RF);
+            motorRF.setPower(power_LB_RF);
+            motorRB.setPower(power_LF_RB);
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Motors", "L(%.2f, %.2f) R(%.2f, %.2f)", powerLF, powerLB, powerRF, powerRB);
+            telemetry.addData("Motors", "L(%.2f, %.2f) R(%.2f, %.2f)", power_LF_RB, power_LB_RF, power_LB_RF, power_LF_RB);
             telemetry.update();
         }
     }
