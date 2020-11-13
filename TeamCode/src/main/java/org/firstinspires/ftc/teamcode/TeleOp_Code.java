@@ -89,6 +89,7 @@ public class TeleOp_Code extends LinearOpMode {
 
             // Setup a variable for each drive wheel to save power level for telemetry
             double power_LF_RB, power_LB_RF;
+            double power_LF, power_LB, power_RF, power_RB;
 
             // Calculate power based on joystick positions.
             double c_move_LR = gamepad1.right_stick_x;
@@ -107,18 +108,23 @@ public class TeleOp_Code extends LinearOpMode {
                 else c_move_ang -= Math.PI;
             }
 
-            power_LF_RB = Range.clip(Math.sin(c_move_ang + Math.PI / 4.0) * c_move_mag, -1.0, 1.0);
-            power_LB_RF = Range.clip(Math.sin(c_move_ang - Math.PI / 4.0) * c_move_mag, -1.0, 1.0);
+            power_LF_RB = Math.sin(c_move_ang + Math.PI / 4.0) * c_move_mag;
+            power_LB_RF = Math.sin(c_move_ang - Math.PI / 4.0) * c_move_mag;
+
+            power_LF = Range.clip(power_LF_RB + c_rotate, -1.0, 1.0);
+            power_LB = Range.clip(power_LB_RF + c_rotate, -1.0, 1.0);
+            power_RF = Range.clip(power_LB_RF - c_rotate, -1.0, 1.0);
+            power_RB = Range.clip(power_LF_RB - c_rotate, -1.0, 1.0);
 
             // Send calculated power to wheels
-            motorLF.setPower(power_LF_RB);
-            motorLB.setPower(power_LB_RF);
-            motorRF.setPower(power_LB_RF);
-            motorRB.setPower(power_LF_RB);
+            motorLF.setPower(power_LF);
+            motorLB.setPower(power_LB);
+            motorRF.setPower(power_RF);
+            motorRB.setPower(power_RB);
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Motors", "L(%.2f, %.2f) R(%.2f, %.2f)", power_LF_RB, power_LB_RF, power_LB_RF, power_LF_RB);
+            telemetry.addData("Motors", "L(%.2f, %.2f) R(%.2f, %.2f)", power_LF, power_LB, power_RF, power_RB);
             telemetry.update();
         }
     }
