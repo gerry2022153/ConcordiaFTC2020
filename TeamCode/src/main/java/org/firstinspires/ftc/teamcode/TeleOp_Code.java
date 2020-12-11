@@ -56,10 +56,10 @@ public class TeleOp_Code extends LinearOpMode {
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
 
-    private DcMotor motorLF = null;
-    private DcMotor motorLB = null;
-    private DcMotor motorRF = null;
-    private DcMotor motorRB = null;
+    private DcMotor wheelLF = null;
+    private DcMotor wheelLB = null;
+    private DcMotor wheelRF = null;
+    private DcMotor wheelRB = null;
 
 
     @Override
@@ -70,15 +70,15 @@ public class TeleOp_Code extends LinearOpMode {
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        motorLF = hardwareMap.get(DcMotor.class, "motor_lf");
-        motorLB = hardwareMap.get(DcMotor.class, "motor_lb");
-        motorRF = hardwareMap.get(DcMotor.class, "motor_rf");
-        motorRB = hardwareMap.get(DcMotor.class, "motor_rb");
+        wheelLF = hardwareMap.get(DcMotor.class, "wheel_lf");
+        wheelLB = hardwareMap.get(DcMotor.class, "wheel_lb");
+        wheelRF = hardwareMap.get(DcMotor.class, "wheel_rf");
+        wheelRB = hardwareMap.get(DcMotor.class, "wheel_rb");
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
-        motorLF.setDirection(DcMotor.Direction.REVERSE);
-        motorLB.setDirection(DcMotor.Direction.REVERSE);
+        wheelLF.setDirection(DcMotor.Direction.REVERSE);
+        wheelLB.setDirection(DcMotor.Direction.REVERSE);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -88,8 +88,8 @@ public class TeleOp_Code extends LinearOpMode {
         while (opModeIsActive()) {
 
             // Setup a variable for each drive wheel to save power level for telemetry
-            double power_LF_RB, power_LB_RF;
-            double power_LF, power_LB, power_RF, power_RB;
+            double p_wheel_LF_RB, p_wheel_LB_RF;
+            double p_wheelLF, p_wheelLB, p_wheelRF, p_wheelRB;
 
             // Calculate power based on joystick positions.
             double c_move_LR = gamepad1.right_stick_x;
@@ -108,23 +108,23 @@ public class TeleOp_Code extends LinearOpMode {
                 else c_move_ang -= Math.PI;
             }
 
-            power_LF_RB = Math.sin(c_move_ang + Math.PI / 4.0) * c_move_mag;
-            power_LB_RF = Math.sin(c_move_ang - Math.PI / 4.0) * c_move_mag;
+            p_wheel_LF_RB = Math.sin(c_move_ang + Math.PI / 4.0) * c_move_mag;
+            p_wheel_LB_RF = Math.sin(c_move_ang - Math.PI / 4.0) * c_move_mag;
 
-            power_LF = Range.clip(power_LF_RB + c_rotate, -1.0, 1.0);
-            power_LB = Range.clip(power_LB_RF + c_rotate, -1.0, 1.0);
-            power_RF = Range.clip(power_LB_RF - c_rotate, -1.0, 1.0);
-            power_RB = Range.clip(power_LF_RB - c_rotate, -1.0, 1.0);
+            p_wheelLF = Range.clip(p_wheel_LF_RB + c_rotate, -1.0, 1.0);
+            p_wheelLB = Range.clip(p_wheel_LB_RF + c_rotate, -1.0, 1.0);
+            p_wheelRF = Range.clip(p_wheel_LB_RF - c_rotate, -1.0, 1.0);
+            p_wheelRB = Range.clip(p_wheel_LF_RB - c_rotate, -1.0, 1.0);
 
             // Send calculated power to wheels
-            motorLF.setPower(power_LF);
-            motorLB.setPower(power_LB);
-            motorRF.setPower(power_RF);
-            motorRB.setPower(power_RB);
+            wheelLF.setPower(p_wheelLF);
+            wheelLB.setPower(p_wheelLB);
+            wheelRF.setPower(p_wheelRF);
+            wheelRB.setPower(p_wheelRB);
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Motors", "L(%.2f, %.2f) R(%.2f, %.2f)", power_LF, power_LB, power_RF, power_RB);
+            telemetry.addData("Wheels", "L(%.2f, %.2f) R(%.2f, %.2f)", p_wheelLF, p_wheelLB, p_wheelRF, p_wheelRB);
             telemetry.update();
         }
     }
