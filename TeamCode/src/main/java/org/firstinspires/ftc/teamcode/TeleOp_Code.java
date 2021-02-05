@@ -32,6 +32,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import java.lang.Math;
@@ -61,6 +62,13 @@ public class TeleOp_Code extends LinearOpMode {
     private DcMotor wheelRF = null;
     private DcMotor wheelRB = null;
 
+    private DcMotor scooperL = null;
+    private DcMotor scooperR = null;
+    private DcMotor liftL = null;
+    private DcMotor liftR = null;
+
+    private Servo clawL = null;
+    private Servo clawR = null;
 
     @Override
     public void runOpMode() {
@@ -75,6 +83,14 @@ public class TeleOp_Code extends LinearOpMode {
         wheelRF = hardwareMap.get(DcMotor.class, "wheel_rf");
         wheelRB = hardwareMap.get(DcMotor.class, "wheel_rb");
 
+        scooperL = hardwareMap.get(DcMotor.class, "scooper_l");
+        scooperR = hardwareMap.get(DcMotor.class, "scooper_r");
+        liftL = hardwareMap.get(DcMotor.class, "lift_l");
+        liftR = hardwareMap.get(DcMotor.class, "lift_r");
+
+        clawL = hardwareMap.get(Servo.class, "claw_l");
+        clawL = hardwareMap.get(Servo.class, "claw_r");
+
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
         wheelLF.setDirection(DcMotor.Direction.REVERSE);
@@ -87,11 +103,10 @@ public class TeleOp_Code extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
-            // Setup a variable for each drive wheel to save power level for telemetry
+            // Wheel control
             double p_wheel_LF_RB, p_wheel_LB_RF;
             double p_wheelLF, p_wheelLB, p_wheelRF, p_wheelRB;
 
-            // Calculate power based on joystick positions.
             double c_move_LR = gamepad1.right_stick_x;
             double c_move_FB = -gamepad1.right_stick_y;
             double c_rotate = gamepad1.left_stick_x;
@@ -116,15 +131,36 @@ public class TeleOp_Code extends LinearOpMode {
             p_wheelRF = Range.clip(p_wheel_LB_RF - c_rotate, -1.0, 1.0);
             p_wheelRB = Range.clip(p_wheel_LF_RB - c_rotate, -1.0, 1.0);
 
-            // Send calculated power to wheels
             wheelLF.setPower(p_wheelLF);
             wheelLB.setPower(p_wheelLB);
             wheelRF.setPower(p_wheelRF);
             wheelRB.setPower(p_wheelRB);
 
+            // Lift control
+            double p_scooper, p_lift;
+            p_scooper = Range.clip(gamepad2.left_trigger - gamepad2.right_trigger, -1.0, 1.0);
+            p_lift = -gamepad2.left_stick_y;
+
+            scooperL.setPower(p_scooper);
+            scooperR.setPower(p_scooper);
+            liftL.setPower(p_lift);
+            liftR.setPower(p_lift);
+
+            // Claw control
+            int c_claw = 0;
+            if (gamepad2.left_bumper) c_claw = 1;
+            else if (gamepad2.right_bumper) c_claw = -1;
+
+            if (c_claw != 0) {
+                clawL.setPosition(clawL.getPosition() + 0.01 * c_claw);
+                clawR.setPosition(clawR.getPosition() + 0.01 * c_claw);
+            }
+
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Wheels", "L(%.2f, %.2f) R(%.2f, %.2f)", p_wheelLF, p_wheelLB, p_wheelRF, p_wheelRB);
+            telemetry.addData("Lift", "Scooper(%.2f) Lift(%.2f)", p_scooper, p_lift);
+            telemetry.addData("Claw Position", "L(%.2f) R(%.2f)", clawL.getPosition(), clawR.getPosition());
             telemetry.update();
         }
     }
