@@ -70,6 +70,28 @@ public class TeleOp_Code extends LinearOpMode {
     private Servo clawL = null;
     private Servo clawR = null;
 
+    private void moveRobot(double c_move_LR, double c_move_FB, double c_rotate) {
+        double c_move_mag = Math.sqrt(c_move_LR * c_move_LR + c_move_FB * c_move_FB);
+        double c_move_ang = 0.0;
+        if (c_move_LR == 0.0) {
+            if (c_move_FB > 0.0) c_move_ang = Math.PI / 2.0;
+            else if (c_move_FB < 0.0) c_move_ang = -Math.PI / 2.0;
+        } else if (c_move_LR > 0.0) c_move_ang = Math.atan(c_move_FB / c_move_LR);
+        else {
+            c_move_ang = Math.atan(c_move_FB / c_move_LR);
+            if (c_move_FB >= 0.0) c_move_ang += Math.PI;
+            else c_move_ang -= Math.PI;
+        }
+
+        double p_wheel_LF_RB = Math.sin(c_move_ang + Math.PI / 4.0) * c_move_mag;
+        double p_wheel_LB_RF = Math.sin(c_move_ang - Math.PI / 4.0) * c_move_mag;
+
+        wheelLF.setPower(Range.clip(p_wheel_LF_RB + c_rotate, -1.0, 1.0));
+        wheelLB.setPower(Range.clip(p_wheel_LB_RF + c_rotate, -1.0, 1.0));
+        wheelRF.setPower(Range.clip(p_wheel_LB_RF - c_rotate, -1.0, 1.0));
+        wheelRB.setPower(Range.clip(p_wheel_LF_RB - c_rotate, -1.0, 1.0));
+    }
+
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
@@ -104,37 +126,11 @@ public class TeleOp_Code extends LinearOpMode {
         while (opModeIsActive()) {
 
             // Wheel control
-            double p_wheel_LF_RB, p_wheel_LB_RF;
-            double p_wheelLF, p_wheelLB, p_wheelRF, p_wheelRB;
-
             double c_move_LR = gamepad1.right_stick_x;
             double c_move_FB = -gamepad1.right_stick_y;
             double c_rotate = gamepad1.left_stick_x;
 
-            double c_move_mag = Math.sqrt(c_move_LR * c_move_LR + c_move_FB * c_move_FB);
-            double c_move_ang = 0.0;
-            if (c_move_LR == 0.0) {
-                if (c_move_FB > 0.0) c_move_ang = Math.PI / 2.0;
-                else if (c_move_FB < 0.0) c_move_ang = -Math.PI / 2.0;
-            } else if (c_move_LR > 0.0) c_move_ang = Math.atan(c_move_FB / c_move_LR);
-            else {
-                c_move_ang = Math.atan(c_move_FB / c_move_LR);
-                if (c_move_FB >= 0.0) c_move_ang += Math.PI;
-                else c_move_ang -= Math.PI;
-            }
-
-            p_wheel_LF_RB = Math.sin(c_move_ang + Math.PI / 4.0) * c_move_mag;
-            p_wheel_LB_RF = Math.sin(c_move_ang - Math.PI / 4.0) * c_move_mag;
-
-            p_wheelLF = Range.clip(p_wheel_LF_RB + c_rotate, -1.0, 1.0);
-            p_wheelLB = Range.clip(p_wheel_LB_RF + c_rotate, -1.0, 1.0);
-            p_wheelRF = Range.clip(p_wheel_LB_RF - c_rotate, -1.0, 1.0);
-            p_wheelRB = Range.clip(p_wheel_LF_RB - c_rotate, -1.0, 1.0);
-
-            wheelLF.setPower(p_wheelLF);
-            wheelLB.setPower(p_wheelLB);
-            wheelRF.setPower(p_wheelRF);
-            wheelRB.setPower(p_wheelRB);
+            moveRobot(c_move_LR, c_move_FB, c_rotate);
 
             // Lift control
             double p_scooper, p_lift;
@@ -158,7 +154,7 @@ public class TeleOp_Code extends LinearOpMode {
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Wheels", "L(%.2f, %.2f) R(%.2f, %.2f)", p_wheelLF, p_wheelLB, p_wheelRF, p_wheelRB);
+            telemetry.addData("Wheels", "L(%.2f, %.2f) R(%.2f, %.2f)", wheelLF.getPower(), wheelLB.getPower(), wheelRF.getPower(), wheelRB.getPower());
             telemetry.addData("Lift", "Scooper(%.2f) Lift(%.2f)", p_scooper, p_lift);
             telemetry.addData("Claw Position", "L(%.2f) R(%.2f)", clawL.getPosition(), clawR.getPosition());
             telemetry.update();
